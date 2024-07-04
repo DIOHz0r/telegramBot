@@ -4,6 +4,10 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    app.tg_bot_id: '%env(TG_BOT_ID)%'
+    app.tg_bot_token: '%env(TG_BOT_TOKEN)%'
+    app.tg_api_url: '%env(TG_API_URL)%'
+    app.tg_owner_id: '%env(TG_OWNER_ID)%'
 
 services:
     # default configuration for services in *this* file
