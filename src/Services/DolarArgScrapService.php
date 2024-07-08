@@ -6,7 +6,7 @@ use App\Entity\ScrapedData;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class DolarScrapService implements ScrapInterface
+class DolarArgScrapService implements ScrapInterface
 {
 
     const SOURCES = [
