@@ -16,6 +16,9 @@ class Channel
     #[ORM\Column(length: 255)]
     private ?string $service = null;
 
+    #[ORM\Column(length: 50)]
+    private ?string $environment = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -38,5 +41,15 @@ class Channel
         $this->service = $service;
 
         return $this;
+    }
+
+    public function getEnvironment(): ?string
+    {
+        return $this->environment;
+    }
+
+    public function setEnvironment(?string $environment): void
+    {
+        $this->environment = $environment;
     }
 }
