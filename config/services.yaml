@@ -26,3 +26,7 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Services\TgBotService:
+        arguments:
+            $api_key: '%env(TG_BOT_TOKEN)%'
+            $api_url: '%env(TG_API_URL)%'
