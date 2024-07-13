@@ -9,15 +9,23 @@ use Doctrine\ORM\Mapping as ORM;
 class Channel
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $service = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 50, nullable: true)]
     private ?string $environment = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $name = null;
+
+
+    public function __toString(): string
+    {
+        return $this->getName()." [[".$this->getId()."]]";
+    }
 
     public function getId(): ?int
     {
@@ -51,5 +59,17 @@ class Channel
     public function setEnvironment(?string $environment): void
     {
         $this->environment = $environment;
+    }
+
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
+
+    public function setName(string $name): static
+    {
+        $this->name = $name;
+
+        return $this;
     }
 }

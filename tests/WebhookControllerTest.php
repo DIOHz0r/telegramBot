@@ -62,7 +62,7 @@ class WebhookControllerTest extends WebTestCase
     {
         $httpClient = new MockHttpClient(
             new MockResponse(
-                $mockResponse,
+                '',
                 ['http_code' => 200, 'response_headers' => ['Content-Type: application/json']]
             )
         );
