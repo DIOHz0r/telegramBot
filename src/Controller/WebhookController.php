@@ -13,12 +13,6 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class WebhookController extends AbstractController
 {
-    private $httpClient;
-
-    public function __construct(HttpClientInterface $httpClient)
-    {
-        $this->httpClient = $httpClient;
-    }
 
     #[Route('/webhook', name: 'app_webhook')]
     public function index(Request $request, TgBotService $botService, EntityManagerInterface $entityManager)
@@ -58,7 +52,7 @@ class WebhookController extends AbstractController
         $chatId = $message['chat']['id'];
         $parts = explode(' ', $message['text']);
         switch ($parts[0]) {
-            case '/start':
+            case '/ping':
                 $botService->sendMessage([
                     'chat_id' => $chatId,
                     'parse_mode' => 'MarkdownV2',
@@ -74,7 +68,7 @@ class WebhookController extends AbstractController
                     'text' => $text,
                 ]);
                 break;
-            case '/add_service':
+            case '/edit_channel_data':
                 $serviceName = $parts[1] ?? null;
                 $channelId = $parts[2] ?? null;
                 if (!$channelId || !$serviceName) {
@@ -102,21 +96,6 @@ class WebhookController extends AbstractController
                     'chat_id' => $chatId,
                     'parse_mode' => 'Markdown',
                     'text' => 'Canal y servicio actualizado',
-                ]);
-                break;
-            case '/chats':
-                $text = 'No hay chats disponibles';
-                $botService->sendMessage([
-                    'chat_id' => $chatId,
-                    'parse_mode' => 'Markdown',
-                    'text' => $text,
-                ]);
-                break;
-            case '/stop':
-                $botService->sendMessage([
-                    'chat_id' => $chatId,
-                    'parse_mode' => 'Markdown',
-                    'text' => 'Chao '.$message['from']['first_name'],
                 ]);
                 break;
         }
