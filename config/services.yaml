@@ -30,3 +30,8 @@ services:
         arguments:
             $api_key: '%env(TG_BOT_TOKEN)%'
             $api_url: '%env(TG_API_URL)%'
+    App\Command\DolarArgCommand:
+        arguments:
+            $scrapService: '@App\Services\DolarArgScrapService'
+        tags:
+            - { name: 'console.command'}

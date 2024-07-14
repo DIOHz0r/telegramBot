@@ -20,7 +20,7 @@ class DolarArgScrapService implements ScrapInterface
         'dolar_mep' => 'https://mercados.ambito.com/dolarrava/mep/variacion',
         'euro_blue' => 'https://mercados.ambito.com/euro/informal/variacion',
         'dolar_mayorista' => 'https://mercados.ambito.com/dolar/mayorista/variacion',
-        'dolar_futuro' => 'https://mercados.ambito.com/dolarfuturo/variacion',
+//        'dolar_futuro' => 'https://mercados.ambito.com/dolarfuturo/variacion',
     ];
 
     protected HttpClientInterface $httpClient;
@@ -46,15 +46,17 @@ class DolarArgScrapService implements ScrapInterface
             if (!$data) {
                 continue;
             }
-            $scraped[] = $data;
+            $scraped[$type] = $data;
         }
         $this->data = $scraped;
+
+        return $this;
     }
 
     public function saveData()
     {
         if ($this->data === null) {
-            return;
+            return $this;
         }
         $scrapedData = new ScrapedData();
         $scrapedData->setSourceType(__CLASS__);
@@ -62,6 +64,8 @@ class DolarArgScrapService implements ScrapInterface
         $em = $this->entityManager;
         $em->persist($scrapedData);
         $em->flush();
+
+        return $this;
     }
 
     public function getData()
@@ -88,10 +92,11 @@ class DolarArgScrapService implements ScrapInterface
                     $icon = '';
                     break;
             }
-            $post .= "*".ucwords(str_replace('_', ' ', $type)).":*\n";
-            $post .= "*compra:* ".$info['compra']." - *venta:* ".$info['venta']."\n";
-            $post .= "*variacion:* ".$info['variacion']." ".$icon."\n\n";
+            $post .= "#".str_replace('_', '', ucwords($type, "_"))."\n";
+            $post .= "*Compra:* ".$info['compra']." - *Venta:* ".$info['venta']."\n";
+            $post .= "*Variacion:* ".$info['variacion']." ".$icon."\n\n";
         }
+
         return $post;
     }
 }
