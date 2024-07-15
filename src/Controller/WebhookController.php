@@ -52,6 +52,7 @@ class WebhookController extends AbstractController
         $chatId = $message['chat']['id'];
         $parts = explode(' ', $message['text']);
         switch ($parts[0]) {
+            case '/start':
             case '/ping':
                 $botService->sendMessage([
                     'chat_id' => $chatId,
