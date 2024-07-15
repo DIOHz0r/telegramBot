@@ -10,16 +10,16 @@ class DolarArgScrapService implements ScrapInterface
 {
 
     const SOURCES = [
-        'dolar_blue' => 'https://mercados.ambito.com/dolar/informal/variacion',
+        'dolar_oficial' => 'https://mercados.ambito.com/dolar/oficial/variacion',
         'dolar_banco_nacion' => 'https://mercados.ambito.com/dolarnacion/variacion',
-        'euro' => 'https://mercados.ambito.com/euro/variacion',
         'dolar_turista' => 'https://mercados.ambito.com/dolarturista/variacion',
+        'dolar_blue' => 'https://mercados.ambito.com/dolar/informal/variacion',
+        'dolar_mep' => 'https://mercados.ambito.com/dolarrava/mep/variacion',
         'dolar_cripto' => 'https://mercados.ambito.com/dolarcripto/variacion',
         'dolar_ccl' => 'https://mercados.ambito.com/dolarrava/cl/variacion',
-        'dolar_oficial' => 'https://mercados.ambito.com/dolar/oficial/variacion',
-        'dolar_mep' => 'https://mercados.ambito.com/dolarrava/mep/variacion',
-        'euro_blue' => 'https://mercados.ambito.com/euro/informal/variacion',
         'dolar_mayorista' => 'https://mercados.ambito.com/dolar/mayorista/variacion',
+        'euro' => 'https://mercados.ambito.com/euro/variacion',
+        'euro_blue' => 'https://mercados.ambito.com/euro/informal/variacion',
 //        'dolar_futuro' => 'https://mercados.ambito.com/dolarfuturo/variacion',
     ];
 
@@ -80,13 +80,13 @@ class DolarArgScrapService implements ScrapInterface
         foreach ($data as $type => $info) {
             switch ($info['class-variacion']) {
                 case 'up':
-                    $icon = '🔺';
+                    $icon = '🟢';
                     break;
                 case 'down':
-                    $icon = '🔻';
+                    $icon = '🔴';
                     break;
                 case 'equal':
-                    $icon = '🔹';
+                    $icon = '🟡';
                     break;
                 default:
                     $icon = '';
