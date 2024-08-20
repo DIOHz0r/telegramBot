@@ -2,16 +2,15 @@
 
 namespace App\Command;
 
-use App\Entity\Channel;
+use App\Event\SocialEvent;
 use App\Services\DolarArgScrapService;
 use App\Services\ScrapInterface;
-use App\Services\TgBotService;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 #[AsCommand(
     name: 'app:dolar-arg',
@@ -19,40 +18,28 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class DolarArgCommand extends Command
 {
-    private TgBotService $tgBotService;
-    private EntityManagerInterface $entityManager;
     private DolarArgScrapService $scrapService;
+    private EventDispatcherInterface $dispatcher;
 
     public function __construct(
-        TgBotService $tgBotService,
-        EntityManagerInterface $entityManager,
-        ScrapInterface $scrapService
+        ScrapInterface $scrapService,
+        EventDispatcherInterface $dispatcher,
     ) {
         parent::__construct();
-        $this->tgBotService = $tgBotService;
-        $this->entityManager = $entityManager;
         $this->scrapService = $scrapService;
+        $this->dispatcher = $dispatcher;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $channels = $this->entityManager->getRepository(Channel::class)->findBy(
-            ['service' => 'DolarArgScrapService']
-        );
-        foreach ($channels as $channel) {
-            $scrap = $this->scrapService->scrapSources();
-            $scrap->saveData();
-            $post = $scrap->preparePost();
-            if ($post) {
-                $this->tgBotService->sendMessage([
-                    'chat_id' => $channel->getId(),
-                    'text' => $post,
-                    'parse_mode' => 'Markdown',
-                ]);
-            }
-        }
-        $io->success('Comando completado sin problemas');
+        $scrap = $this->scrapService->scrapSources();
+        $scrap->saveData();
+        $post = $scrap->preparePost();
+        $io->info('Enviando data a redes disponibles.');
+        $event = new SocialEvent($post);
+        $this->dispatcher->dispatch($event, SocialEvent::SEND_POST);
+        $io->success('Comando completado.');
 
         return Command::SUCCESS;
     }

@@ -3,10 +3,10 @@
 namespace App\Services;
 
 use AllowDynamicProperties;
-use App\TgEntities\InputMedia\InputMediaInterface;
+use App\HttpClientHandler;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpClient\Exception\ClientException;
-use Symfony\Component\HttpClient\Exception\ServerException;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
@@ -128,6 +128,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  */
 #[AllowDynamicProperties] class TgBotService
 {
+    use HttpClientHandler;
+
     /**
      * Available fields for InputFile helper
      *
@@ -183,7 +185,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
     {
         // ensure no empty data
         if (count($data) === 0) {
-            throw new \Exception('Data is empty!');
+            throw new BadRequestException('Data is empty!');
         }
         // Remember which action is currently being executed.
         self::$current_action = $action;
@@ -193,7 +195,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
         $this->logger->debug($raw_response, ['tgbot_send']);
         if (null === $response) {
             $this->logger->debug($raw_response);
-            throw new \Exception('Telegram returned an invalid response!');
+            throw new BadRequestException('Telegram returned an invalid response!');
         }
         //TODO: verificar esto luego....
 //        $response = new ServerResponse($response);
@@ -222,98 +224,36 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
             $this->api_url.'/bot'.$this->api_key.'/'.$action,
             $request_params
         );
-        $result = $response->getContent();
-        // check for errors
-        $level = (int)floor($response->getStatusCode() / 100);
-        if ($level != 2) {
-            if ($level === 4) {
-                $label = 'Client error';
-                $className = ClientException::class;
-            } elseif ($level === 5) {
-                $label = 'Server error';
-                $className = ServerException::class;
-            } else {
-                $label = 'Unsuccessful request';
-                $className = \Exception::class;
-            }
-            throw new $className($label, $response->getStatusCode());
+        try {
+            $this->checkErrors($response);
+        } catch (\RuntimeException $e) {
+            return '';
         }
-//        $this->logger->debug('Request data:'.PHP_EOL.print_r($data, true), ['tgbot_exec']);
-//        $this->logger->debug('Response data:'.PHP_EOL.$result, ['tgbot_exec']);
+        $result = $response->getContent();
 
         return $result;
     }
 
     public function setUpRequestParams(array $data): array
     {
-        $has_resource = false;
-        $multipart = [];
-
-        foreach ($data as $key => &$item) {
-            if ($key === 'media') {
-                // Magical media input helper.
-                $item = $this->mediaInputHelper($item, $has_resource, $multipart);
-            } elseif (array_key_exists(self::$current_action, self::$input_file_fields) && in_array(
-                    $key,
-                    self::$input_file_fields[self::$current_action],
-                    true
-                )) {
-                // Allow absolute paths to local files.
-                if (is_string($item) && file_exists($item)) {
-//                    $item = new Stream(self::encodeFile($item));
-                }
-            }
-            // Reformat data array in multipart way if it contains a resource
-            $has_resource = $has_resource || is_resource($item);
-            //$has_resource = $has_resource || is_resource($item) || $item instanceof Stream;
-            $multipart[] = ['name' => $key, 'contents' => $item];
-        }
-        unset($item);
-
-        if ($has_resource) {
-            return ['multipart' => $multipart];
+        if (!key_exists('attach', $data)) {
+            return ['json' => $data];
         }
 
-        return ['json' => $data];
-    }
-
-    public function mediaInputHelper(mixed $item, bool $has_resource, array $multipart)
-    {
-        $was_array = is_array($item);
-        $was_array || $item = [$item];
-        foreach ($item as $media_item) {
-            if (!($media_item instanceof InputMediaInterface)) {
-                continue;
-            }
-
-            // Make a list of all possible media that can be handled by the helper.
-            $possible_medias = array_filter([
-                'media' => $media_item->getMedia(),
-                'thumbnail' => $media_item->getThumbnail(),
-            ]);
-
-            foreach ($possible_medias as $type => $media) {
-                // Allow absolute paths to local files.
-                /*if (is_string($media) && !str_starts_with($media, 'attach://') && file_exists($media)) {
-                    $media = new Stream(self::encodeFile($media));
-                }*/
-
-                //if (is_resource($media) || $media instanceof Stream) {
-                if (is_resource($media)) {
-                    $has_resource = true;
-                    $unique_key = uniqid($type.'_', false);
-                    $multipart[] = ['name' => $unique_key, 'contents' => $media];
-
-                    // We're literally overwriting the passed media type data!
-                    $media_item->$type = 'attach://'.$unique_key;
-                    $media_item->raw_data[$type] = 'attach://'.$unique_key;
-                }
-            }
+        $file = file_exists($data['attach']) ? fopen($data['attach'], 'rb') : null;
+        if(!$file) {
+            throw new FileException('Attached file not found');
         }
-
-        $was_array || $item = reset($item);
-
-        return json_encode($item);
+        $type = $data['type'];
+        unset($data['attach'], $data['type']);
+        foreach ($data as $key => $value) {
+            $newData[$key] = $value;
+        }
+        $newData[$type] = $file;
+        $algo = true;
+        return [
+            'body' => $newData
+        ];
     }
 
 }

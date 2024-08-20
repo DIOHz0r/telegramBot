@@ -16,28 +16,15 @@ class ScrapedDataRepository extends ServiceEntityRepository
         parent::__construct($registry, ScrapedData::class);
     }
 
-    //    /**
-    //     * @return ScrapedData[] Returns an array of ScrapedData objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('s')
-    //            ->andWhere('s.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('s.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function findLastMonthData()
+    {
+        $qb = $this->createQueryBuilder('sd')
+            ->where('sd.timestamp >= :date_start')
+            ->andWhere('sd.timestamp <= :date_end')
+            ->setParameter(':date_start', date("Y-m-01", strtotime("first day of previous month")))
+            ->setParameter(':date_end', date("Y-m-t", strtotime("last day of previous month")));
+        $query = $qb->getQuery();
 
-    //    public function findOneBySomeField($value): ?ScrapedData
-    //    {
-    //        return $this->createQueryBuilder('s')
-    //            ->andWhere('s.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        return $query->getArrayResult();
+    }
 }
